@@ -117,9 +117,10 @@ contains
 		write(20) int(instrument, int8) ! change to whatever instrument was requested
 		trackBytes = trackBytes + 3
 	end subroutine newTrack
-	subroutine addNote(note, beats)
+	subroutine addNote(note, beats, velocity)
 		integer, intent(in) :: note
 		real, intent(in) :: beats
+		integer, intent(in), optional :: velocity
 		integer :: nOfDeltaTimeBytes
 		integer(kind=int8), dimension(:), allocatable :: deltaTimeBytes, durationDeltaTimeBytes
 		if (note > 255 .or. 0 > note) then
@@ -133,7 +134,11 @@ contains
 		write(20) deltaTimeBytes ! delta time note
 		write(20) int(ior(z'90', trackNum), int8) ! event noteon, track whatever it's on
 		write(20) int(note, int8) ! whichever note was requested
-		write(20) int(z'60', int8) ! 96 velocity
+		if (.not. present(velocity)) then
+			write(20) int(z'60', int8) ! 96 velocity
+		else
+			write(20) int(velocity, int8)
+		end if
 
 		! setting note duration delta time in vlq format (1 beat = 96 ticks)
 		call vlq(int(beats * 96), durationDeltaTimeBytes, nOfDeltaTimeBytes)
@@ -151,7 +156,8 @@ contains
 		trackDT = trackDT + int(beats * 96)
 	end subroutine addRest
 	subroutine noteOn(note, velocity)
-		integer, intent(in) :: note, velocity
+		integer, intent(in) :: note
+		integer, intent(in), optional :: velocity
 		integer :: nOfDeltaTimeBytes
 		integer(kind=int8), dimension(:), allocatable :: deltaTimeBytes
 		if (note > 255 .or. 0 > note) then
@@ -166,7 +172,11 @@ contains
 		write(20) deltaTimeBytes ! delta time note
 		write(20) int(ior(z'90', trackNum), int8) ! event noteon, track whatever it's on
 		write(20) int(note, int8) ! whichever note was requested
-		write(20) int(velocity, int8) ! 96 velocity
+		if (.not. present(velocity)) then
+			write(20) int(z'60', int8) ! 96 velocity
+		else
+			write(20) int(velocity, int8)
+		end if
 
 		trackDT = 0
 		trackBytes = trackBytes + 3
